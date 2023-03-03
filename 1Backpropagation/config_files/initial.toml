@@ -1,0 +1,22 @@
+[GLOBALS]
+loss = "cross_entropy"
+lrate = 0.01
+wreg = 0.01
+wrt = "l1"
+n = 1000
+seed = 42
+batch_size = 100
+
+[DATASET]
+n_samples = 500
+seed = 42
+center = false
+show_n_random_images = 10
+
+
+[LAYERS]
+input = 2500
+layers = [
+    { size = 4, act = "relu", wr = "glorot"}
+]
+use_softmax = true

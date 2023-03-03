@@ -1,0 +1,30 @@
+[GLOBALS]
+loss = "cross_entropy"
+lrate = 0.0001
+wreg = 0.2
+wrt = "l2"
+n = 1000
+seed = 42
+batch_size = 100
+
+[DATASET]
+n_samples = 500
+seed = 42
+train_size = 0.7
+val_size = 0.2
+test_size = 0.1
+wr = [0.4, 0.6]
+hr = [0.4, 0.6]
+noise = 0.01
+center = false
+n_size = 50
+show_n_random_images = 10
+
+[LAYERS]
+input = 2500
+layers = [
+    { size = 10, act = "relu", wr = "glorot" },
+    { size = 15, act = "logistic", wr = "glorot" },
+    { size = 4, act = "relu", wr = "glorot", lrate = 0.001}
+]
+use_softmax = true
