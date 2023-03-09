@@ -32,8 +32,10 @@ frost_source_names = {
 }
 
 
-def _read_frost_data():
-    data_file = data_path / "frost_weather.csv"
+def _read_frost_data(weather_file=None):
+    if weather_file is None:
+        weather_file = "frost_weather.csv"
+    data_file = data_path / weather_file
     return pd.read_csv(
         data_file,
         sep=";",
@@ -94,9 +96,11 @@ def _preprocess_frost_data(weather):
     return weather
 
 
-def _read_consumption_data():
+def _read_consumption_data(consumption_file):
+    if consumption_file is None:
+        consumption_file = "consumption_tznaive.csv"
     cons = pd.read_csv(
-        data_path / "consumption_tznaive.csv",
+        data_path / consumption_file,
         sep=",",
         parse_dates=["timestamp"],
         index_col=0,
@@ -124,11 +128,11 @@ def _join_consumption_and_weather(cons, weather):
     return df
 
 
-def read_consumption_and_weather():
-    cons_raw = _read_consumption_data()
+def read_consumption_and_weather(consumption_file=None, weather_file=None):
+    cons_raw = _read_consumption_data(consumption_file)
     cons = _preprocess_consumption_data(cons_raw)
 
-    frost_raw = _read_frost_data()
+    frost_raw = _read_frost_data(weather_file)
     weather = _preprocess_frost_data(frost_raw)
 
     return cons, weather, _join_consumption_and_weather(cons, weather)
