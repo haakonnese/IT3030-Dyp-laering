@@ -12,8 +12,9 @@ if PLOT_IMAGES:
     import matplotlib.pyplot as plt
 
 
-class AutoEncoder:
-    def __init__(self, force_learn: bool = False, file_name: str = "models/autoencoder.h5") -> None:
+class VariationalAutoEncoder:
+    def __init__(self, force_learn: bool = False, file_name: str = "models/variational_autoencoder.h5",
+                 latent_dim=50) -> None:
         """
         Define model and set some parameters.
         The model is  made for classifying one channel only -- if we are looking at a
@@ -21,6 +22,7 @@ class AutoEncoder:
         """
         self.force_relearn = force_learn
         self.file_name = file_name
+        self.latent_dim = latent_dim
         input_img = keras.Input(shape=(28, 28, 1))
         encoder = Conv2D(32, kernel_size=(3, 3), activation='relu', input_shape=(28, 28, 1), padding="same")(input_img)
         for _ in range(3):
@@ -28,13 +30,16 @@ class AutoEncoder:
             encoder = MaxPooling2D(pool_size=(2, 2))(encoder)
 
         encoder = Conv2D(8, (3, 3), activation='relu', padding='same')(encoder)
-        encoder = MaxPooling2D((2, 2), padding='same')(encoder)
-        encoder = keras.layers.Activation(keras.activations.tanh)(encoder)
         encoder = Flatten()(encoder)
+
+        encoder_mean = Dense(latent_dim)(encoder)
+        encoder_log_var = Dense(latent_dim)(encoder)
+
+        encoder = keras.layers.Lambda(self.z_layer)([encoder_mean, encoder_log_var])
 
         encoder_model = Model(input_img, encoder)
 
-        input_decoder = keras.Input(shape=(32,))
+        input_decoder = keras.Input(shape=(latent_dim,))
         decoder = Dense(49, activation='relu')(input_decoder)
         decoder = Reshape((7, 7, 1))(decoder)
         decoder = Conv2DTranspose(8, (3, 3), strides=1, activation='relu', padding='same')(decoder)
@@ -44,18 +49,27 @@ class AutoEncoder:
         decoder = Conv2DTranspose(1, (3, 3), activation='relu', padding='same')(decoder)
         decoder_model = Model(input_decoder, decoder)
 
-        autoencoder_input = keras.Input(shape=(28, 28, 1))
-        encoded = encoder_model(autoencoder_input)
+        vae_input = keras.Input(shape=(28, 28, 1))
+        encoded = encoder_model(vae_input)
         decoded = decoder_model(encoded)
-        autoencoder_model = Model(inputs=autoencoder_input, outputs=decoded)
-
-        autoencoder_model.compile(loss=keras.losses.binary_crossentropy,
+        vae_model = Model(inputs=vae_input, outputs=decoded)
+        binary_crossentropy_error = keras.losses.binary_crossentropy(vae_input, decoded)
+        kl_loss = 1 + encoder_log_var - keras.backend.square(encoder_mean) - keras.backend.exp(encoder_log_var)
+        kl_loss *= -0.5
+        vae_model.add_loss(keras.backend.mean(binary_crossentropy_error + kl_loss))
+        vae_model.compile(loss=keras.losses.binary_crossentropy,
                                   optimizer=keras.optimizers.Adam(lr=.01),
                                   metrics=['accuracy'])
-        self.model = autoencoder_model
+        self.model = vae_model
         self.decoder = decoder_model
-        print(autoencoder_model.summary())
+        print(vae_model.summary())
         self.done_training = self.load_weights()
+
+    def z_layer(self, args):
+        z_mean, z_log_var = args
+        epsilon = keras.backend.random_normal(shape=(keras.backend.shape(z_mean)[0], self.latent_dim), mean=0.,
+                                              stddev=1.0)
+        return z_mean + keras.backend.exp(z_log_var * 0.5) * epsilon
 
     def load_weights(self):
         # noinspection PyBroadException
@@ -126,44 +140,22 @@ class AutoEncoder:
         """
         generated_images = np.zeros((number_of_images, 28, 28, no_channels))
         for channel in range(no_channels):
-            random_input = np.random.uniform(-1, 1, size=(number_of_images, 32))
+            random_input = np.random.normal(size=(number_of_images, 32))
             channel_prediction = self.decoder.predict(random_input)
             generated_images[:, :, :, channel] = channel_prediction[:, :, :, 0]
         return generated_images
 
-    def anomaly_detection(self, data: np.ndarray) -> np.ndarray:
-        no_channels = data.shape[-1]
-        print(data.shape)
-        if self.done_training is False:
-            # Model is not trained yet...
-            raise ValueError("Model is not trained, so makes no sense to try to use it")
-
-        generated_images = np.zeros(data.shape)
-        for channel in range(no_channels):
-            channel_prediction = self.model.predict(data[:, :, :, [channel]])
-            generated_images[:, :, :, channel] = channel_prediction[:, :, :, 0]
-        # generate error for each image, shape is batch, 28, 28, no_channels. The error should be cross entropy
-        # between the original image and the generated image. It should be one number for each image
-        error = np.zeros(data[0])
-        epsilon = 1e-7  # to avoid division by zero errors
-        generated_images = np.clip(generated_images, epsilon, 1.0 - epsilon)  # clip values to avoid NaNs in log
-        return generated_images, -(data * np.log(generated_images) + (1 - data) * np.log(1 - generated_images))
-
-
-
-
 
 if __name__ == "__main__":
     gen = StackedMNISTData(mode=DataMode.COLOR_BINARY_COMPLETE, default_batch_size=2048)
-    net = AutoEncoder(force_learn=True, file_name="models/autoencoder.h5")
+    net = VariationalAutoEncoder(force_learn=True, file_name="models/variational_autoencoder.h5")
     net.train(generator=gen, epochs=50)
     show_number_of_images = 10
-    images_ds, classes = gen.get_random_batch(training=False, batch_size=25000)
-    images_ds = images_ds.astype(float)
-    images_ds_small = images_ds[0:show_number_of_images, :, :, :]
     if PLOT_IMAGES:
-        images = net.reconstruct(images_ds_small)
+        images_ds = gen.get_random_batch(training=False, batch_size=25000)[0][0:show_number_of_images, :, :, :]
+        images = net.reconstruct(images_ds)
         _, axs = plt.subplots(2, show_number_of_images)
+        images_ds = images_ds.astype(float)
         images = images.astype(float)
         print(images[0, :, :, 0])
 
@@ -172,7 +164,7 @@ if __name__ == "__main__":
             axs[1][i].set_xticks([])
             axs[0][i].set_yticks([])
             axs[1][i].set_yticks([])
-            axs[0][i].imshow(images_ds_small[i, :, :, :])
+            axs[0][i].imshow(images_ds[i, :, :, :])
             axs[1][i].imshow(images[i, :, :, :])
         plt.show()
 
@@ -185,26 +177,6 @@ if __name__ == "__main__":
             axs[i].set_yticks([])
             axs[i].imshow(images[i, :, :, :])
         plt.show()
-
-    anomaly_images, cross_entropy_error = net.anomaly_detection(gen.get_random_batch(training=False, batch_size=25000)[0])
-    most_error = np.argsort(cross_entropy_error, axis=None)[::-1][0:show_number_of_images]
-    if PLOT_IMAGES:
-        _, axs = plt.subplots(2, show_number_of_images)
-        images_ds = images_ds.astype(float)
-
-        for i in range(show_number_of_images):
-            axs[0][i].set_xticks([])
-            axs[1][i].set_xticks([])
-            axs[0][i].set_yticks([])
-            axs[1][i].set_yticks([])
-            axs[0][i].imshow(images_ds[i, :, :, :])
-            axs[1][i].imshow(anomaly_images[most_error[i], :, :, :])
-            axs[i].imshow(anomaly_images[most_error[i], :, :, :])
-        plt.show()
-    for i, error_img in enumerate(most_error):
-        print(f"Cross-entropy error of anomaly-detected image: {cross_entropy_error[i]})
-        print(f"Class of anomaly-image {classes[error_img]}")
-
     # I have no data generator (VAE or whatever) here, so just use a sampled set
     # print("Finished training")
     # img, labels = gen.get_random_batch(training=False,  batch_size=25000)
