@@ -150,9 +150,9 @@ class VerificationNet:
 
 
 if __name__ == "__main__":
-    gen = StackedMNISTData(mode=DataMode.COLOR_BINARY_COMPLETE, default_batch_size=2048)
-    net = VerificationNet(force_learn=False, file_name="models/verification_model_COLOR.h5")
-    net.train(generator=gen, epochs=30)
+    gen = StackedMNISTData(mode=DataMode.MONO_BINARY_COMPLETE, default_batch_size=2048)
+    net = VerificationNet(force_learn=True, file_name="models/verification_model.h5")
+    net.train(generator=gen, epochs=500)
 
     # I have no data generator (VAE or whatever) here, so just use a sampled set
     print("Finished training")

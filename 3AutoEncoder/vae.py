@@ -1,20 +1,20 @@
 from stacked_mnist import StackedMNISTData, DataMode
 from tensorflow import keras
-from keras.models import Sequential, Model
-from keras.layers import Dense, Dropout, Flatten, Conv2D, MaxPooling2D, UpSampling2D, Conv2DTranspose, Reshape
+from tensorflow.keras.models import Sequential, Model
+from tensorflow.keras.activations import relu
+from tensorflow.keras.layers import Dense, BatchNormalization, Flatten, Conv2D, Activation, Conv2DTranspose, Reshape
 import numpy as np
 from keras.callbacks import TensorBoard
 import os
 import json
+from verification_net import VerificationNet
 
-PLOT_IMAGES = True
-if PLOT_IMAGES:
-    import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 
 
 class VariationalAutoEncoder:
     def __init__(self, force_learn: bool = False, file_name: str = "models/variational_autoencoder.h5",
-                 latent_dim=50) -> None:
+                 latent_dim=50, from_start: bool = False) -> None:
         """
         Define model and set some parameters.
         The model is  made for classifying one channel only -- if we are looking at a
@@ -24,12 +24,14 @@ class VariationalAutoEncoder:
         self.file_name = file_name
         self.latent_dim = latent_dim
         input_img = keras.Input(shape=(28, 28, 1))
-        encoder = Conv2D(32, kernel_size=(3, 3), activation='relu', input_shape=(28, 28, 1), padding="same")(input_img)
-        for _ in range(3):
-            encoder = Conv2D(32, (3, 3), activation='relu', padding="same")(encoder)
-            encoder = MaxPooling2D(pool_size=(2, 2))(encoder)
+        for channels in [64, 128]:
+            encoder = Conv2D(channels, (3, 3), strides=2, activation="relu", padding="same")(input_img)
+            encoder = BatchNormalization()(encoder)
 
-        encoder = Conv2D(8, (3, 3), activation='relu', padding='same')(encoder)
+        for _ in range(8):
+            encoder = Conv2D(128, (3, 3), strides=1, activation="relu", padding="same")(encoder)
+            encoder = BatchNormalization()(encoder)
+
         encoder = Flatten()(encoder)
 
         encoder_mean = Dense(latent_dim)(encoder)
@@ -37,38 +39,47 @@ class VariationalAutoEncoder:
 
         encoder = keras.layers.Lambda(self.z_layer)([encoder_mean, encoder_log_var])
 
-        encoder_model = Model(input_img, encoder)
+        encoder_model = Model(input_img, [encoder_mean, encoder_log_var, encoder])
 
         input_decoder = keras.Input(shape=(latent_dim,))
         decoder = Dense(49, activation='relu')(input_decoder)
         decoder = Reshape((7, 7, 1))(decoder)
-        decoder = Conv2DTranspose(8, (3, 3), strides=1, activation='relu', padding='same')(decoder)
-        for _ in range(2):
-            decoder = Conv2DTranspose(32, (3, 3), strides=2, activation='relu', padding='same')(decoder)
+        for _ in range(8):
+            decoder = Conv2DTranspose(128, (3, 3), activation="relu", strides=1, padding='same')(decoder)
+            decoder = BatchNormalization()(decoder)
 
-        decoder = Conv2DTranspose(1, (3, 3), activation='relu', padding='same')(decoder)
+        for channels in [128, 64]:
+            decoder = Conv2DTranspose(channels, (3, 3), activation="relu", strides=2, padding='same')(decoder)
+            decoder = BatchNormalization()(decoder)
+
+        decoder = Conv2DTranspose(1, (3, 3), activation='sigmoid', padding='same')(decoder)
+
         decoder_model = Model(input_decoder, decoder)
 
-        vae_input = keras.Input(shape=(28, 28, 1))
-        encoded = encoder_model(vae_input)
+        encoded = encoder_model(input_img)[2]
         decoded = decoder_model(encoded)
-        vae_model = Model(inputs=vae_input, outputs=decoded)
-        binary_crossentropy_error = keras.losses.binary_crossentropy(vae_input, decoded)
+        vae_model = Model(inputs=input_img, outputs=decoded)
+        image_difference_loss = keras.losses.binary_crossentropy(input_img, decoded)
+        image_difference_loss = keras.backend.mean(keras.backend.sum(image_difference_loss, axis=[1, 2]))
         kl_loss = 1 + encoder_log_var - keras.backend.square(encoder_mean) - keras.backend.exp(encoder_log_var)
+        kl_loss = keras.backend.sum(kl_loss, axis=-1)
         kl_loss *= -0.5
-        vae_model.add_loss(keras.backend.mean(binary_crossentropy_error + kl_loss))
-        vae_model.compile(loss=keras.losses.binary_crossentropy,
-                                  optimizer=keras.optimizers.Adam(lr=.01),
-                                  metrics=['accuracy'])
+        vae_model.add_loss(keras.backend.mean(image_difference_loss + kl_loss))
+        vae_model.compile(optimizer=keras.optimizers.Adam(learning_rate=1e-3))
         self.model = vae_model
         self.decoder = decoder_model
+        print(encoder_model.summary())
+        print(decoder_model.summary())
         print(vae_model.summary())
-        self.done_training = self.load_weights()
+        self.from_start = from_start
+        if not self.from_start:
+            self.done_training = self.load_weights()
+        else:
+            self.done_training = False
 
     def z_layer(self, args):
         z_mean, z_log_var = args
-        epsilon = keras.backend.random_normal(shape=(keras.backend.shape(z_mean)[0], self.latent_dim), mean=0.,
-                                              stddev=1.0)
+        epsilon = keras.backend.random_normal(shape=(keras.backend.shape(z_mean)[0], self.latent_dim))
         return z_mean + keras.backend.exp(z_log_var * 0.5) * epsilon
 
     def load_weights(self):
@@ -89,7 +100,10 @@ class VariationalAutoEncoder:
         Train model if required. As we have a one-channel model we take care to
         only use the first channel of the data.
         """
-        self.done_training = self.load_weights()
+        if not self.from_start:
+            self.done_training = self.load_weights()
+        else:
+            self.done_training = False
 
         if self.force_relearn or self.done_training is False:
             # Get hold of data
@@ -100,11 +114,11 @@ class VariationalAutoEncoder:
             x_train = x_train[:, :, :, [0]]
             x_test = x_test[:, :, :, [0]]
             # Fit model
+            print(self.file_name.split(".")[0].split("/")[1])
             history = self.model.fit(x=x_train, y=x_train, batch_size=1024, epochs=epochs,
                                      validation_data=(x_test, x_test), verbose=1)
             self.model.save_weights(filepath=self.file_name)
-            import json
-            with open('training.json', 'w') as f:
+            with open(f'{self.file_name.split(".")[0].split("/")[1]}_training_data.json', 'w') as f:
                 json.dump(history.history, f, ensure_ascii=False)
             self.done_training = True
 
@@ -140,48 +154,56 @@ class VariationalAutoEncoder:
         """
         generated_images = np.zeros((number_of_images, 28, 28, no_channels))
         for channel in range(no_channels):
-            random_input = np.random.normal(size=(number_of_images, 32))
+            random_input = np.random.normal(size=(number_of_images, self.latent_dim))
             channel_prediction = self.decoder.predict(random_input)
             generated_images[:, :, :, channel] = channel_prediction[:, :, :, 0]
         return generated_images
 
 
 if __name__ == "__main__":
-    gen = StackedMNISTData(mode=DataMode.COLOR_BINARY_COMPLETE, default_batch_size=2048)
-    net = VariationalAutoEncoder(force_learn=True, file_name="models/variational_autoencoder.h5")
-    net.train(generator=gen, epochs=50)
+    mode = DataMode.MONO_BINARY_COMPLETE
+    if mode == DataMode.MONO_BINARY_COMPLETE or mode == DataMode.MONO_BINARY_MISSING:
+        tolerance = 0.8
+    else:
+        tolerance = 0.5
+    if mode == DataMode.MONO_BINARY_COMPLETE or mode == DataMode.COLOR_BINARY_COMPLETE:
+        filename = "models/variational_autoencoder.h5"
+    else:
+        filename = "models/variational_autoencoder_anomalies.h5"
+    gen = StackedMNISTData(mode=mode, default_batch_size=2048)
+    net = VariationalAutoEncoder(force_learn=True, from_start=False, file_name=filename, latent_dim=2)
+    net.train(generator=gen, epochs=200)
+
+    verification_net = VerificationNet(force_learn=False, file_name="models/verification_model.h5")
     show_number_of_images = 10
-    if PLOT_IMAGES:
-        images_ds = gen.get_random_batch(training=False, batch_size=25000)[0][0:show_number_of_images, :, :, :]
-        images = net.reconstruct(images_ds)
-        _, axs = plt.subplots(2, show_number_of_images)
-        images_ds = images_ds.astype(float)
-        images = images.astype(float)
-        print(images[0, :, :, 0])
+    images_ds, classes = gen.get_random_batch(training=False, batch_size=25000)
+    images = net.reconstruct(images_ds)
+    _, axs = plt.subplots(2, show_number_of_images)
+    images_ds = images_ds.astype(float)
+    images = images.astype(float)
 
-        for i in range(show_number_of_images):
-            axs[0][i].set_xticks([])
-            axs[1][i].set_xticks([])
-            axs[0][i].set_yticks([])
-            axs[1][i].set_yticks([])
-            axs[0][i].imshow(images_ds[i, :, :, :])
-            axs[1][i].imshow(images[i, :, :, :])
-        plt.show()
+    cov = verification_net.check_class_coverage(data=images, tolerance=tolerance)
+    pred, acc = verification_net.check_predictability(data=images, correct_labels=classes, tolerance=tolerance)
+    print(f"Coverage: {100 * cov:.2f}%")
+    print(f"Predictability: {100 * pred:.2f}%")
+    print(f"Accuracy: {100 * acc:.2f}%")
 
-        _, axs = plt.subplots(1, show_number_of_images)
-        images = net.generate_random_images(show_number_of_images, no_channels=gen.channels)
-        images = images.astype(float)
-        print(images[0, :, :, 0])
-        for i in range(show_number_of_images):
-            axs[i].set_xticks([])
-            axs[i].set_yticks([])
-            axs[i].imshow(images[i, :, :, :])
-        plt.show()
-    # I have no data generator (VAE or whatever) here, so just use a sampled set
-    # print("Finished training")
-    # img, labels = gen.get_random_batch(training=False,  batch_size=25000)
-    # cov = net.check_class_coverage(data=img, tolerance=.98)
-    # pred, acc = net.check_predictability(data=img, correct_labels=labels)
-    # print(f"Coverage: {100*cov:.2f}%")
-    # print(f"Predictability: {100*pred:.2f}%")
-    # print(f"Accuracy: {100 * acc:.2f}%")
+    for i in range(show_number_of_images):
+        axs[0][i].set_xticks([])
+        axs[1][i].set_xticks([])
+        axs[0][i].set_yticks([])
+        axs[1][i].set_yticks([])
+        axs[0][i].imshow(images_ds[i, :, :, 0])
+        axs[1][i].imshow(images[i, :, :, 0])
+    plt.savefig("vae_test_data.png")
+    # plt.show()
+
+    _, axs = plt.subplots(1, show_number_of_images)
+    images = net.generate_random_images(show_number_of_images, no_channels=gen.channels)
+    images = images.astype(float)
+    print(images.shape)
+    for i in range(show_number_of_images):
+        axs[i].set_xticks([])
+        axs[i].set_yticks([])
+        axs[i].imshow(images[i, :, :, 0])
+    plt.savefig("vae_generator.png")
