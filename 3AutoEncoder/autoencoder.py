@@ -21,6 +21,7 @@ class AutoEncoder:
         """
         self.force_relearn = force_learn
         self.file_name = file_name
+        latent_dim = 2
         input_img = keras.Input(shape=(28, 28, 1))
         encoder = Conv2D(32, kernel_size=(3, 3), activation='relu', input_shape=(28, 28, 1), padding="same")(input_img)
         for _ in range(3):
@@ -29,12 +30,13 @@ class AutoEncoder:
 
         encoder = Conv2D(8, (3, 3), activation='relu', padding='same')(encoder)
         encoder = MaxPooling2D((2, 2), padding='same')(encoder)
-        encoder = keras.layers.Activation(keras.activations.tanh)(encoder)
         encoder = Flatten()(encoder)
+        encoder = Dense(latent_dim)(encoder)
+        encoder = keras.layers.Activation(keras.activations.tanh)(encoder)
 
         encoder_model = Model(input_img, encoder)
 
-        input_decoder = keras.Input(shape=(32,))
+        input_decoder = keras.Input(shape=(latent_dim,))
         decoder = Dense(49, activation='relu')(input_decoder)
         decoder = Reshape((7, 7, 1))(decoder)
         decoder = Conv2DTranspose(8, (3, 3), strides=1, activation='relu', padding='same')(decoder)
@@ -90,7 +92,7 @@ class AutoEncoder:
                                      validation_data=(x_test, x_test), verbose=1)
             self.model.save_weights(filepath=self.file_name)
             import json
-            with open('training.json', 'w') as f:
+            with open('training1.json', 'w') as f:
                 json.dump(history.history, f, ensure_ascii=False)
             self.done_training = True
 
@@ -126,12 +128,13 @@ class AutoEncoder:
         """
         generated_images = np.zeros((number_of_images, 28, 28, no_channels))
         for channel in range(no_channels):
-            random_input = np.random.uniform(-1, 1, size=(number_of_images, 32))
+            random_input = np.random.normal(size=(number_of_images, 32))
+            random_input = np.tanh(random_input)
             channel_prediction = self.decoder.predict(random_input)
             generated_images[:, :, :, channel] = channel_prediction[:, :, :, 0]
         return generated_images
 
-    def anomaly_detection(self, data: np.ndarray) -> np.ndarray:
+    def anomaly_detection(self, data: np.ndarray):
         no_channels = data.shape[-1]
         print(data.shape)
         if self.done_training is False:
@@ -144,7 +147,7 @@ class AutoEncoder:
             generated_images[:, :, :, channel] = channel_prediction[:, :, :, 0]
         # generate error for each image, shape is batch, 28, 28, no_channels. The error should be cross entropy
         # between the original image and the generated image. It should be one number for each image
-        error = np.zeros(data[0])
+        error = np.zeros(data.shape[0])
         epsilon = 1e-7  # to avoid division by zero errors
         generated_images = np.clip(generated_images, epsilon, 1.0 - epsilon)  # clip values to avoid NaNs in log
         return generated_images, -(data * np.log(generated_images) + (1 - data) * np.log(1 - generated_images))
@@ -154,9 +157,9 @@ class AutoEncoder:
 
 
 if __name__ == "__main__":
-    gen = StackedMNISTData(mode=DataMode.COLOR_BINARY_COMPLETE, default_batch_size=2048)
-    net = AutoEncoder(force_learn=True, file_name="models/autoencoder.h5")
-    net.train(generator=gen, epochs=50)
+    gen = StackedMNISTData(mode=DataMode.MONO_BINARY_COMPLETE, default_batch_size=2048)
+    net = AutoEncoder(force_learn=True, file_name="models/autoencoder_2.h5")
+    net.train(generator=gen, epochs=400)
     show_number_of_images = 10
     images_ds, classes = gen.get_random_batch(training=False, batch_size=25000)
     images_ds = images_ds.astype(float)
@@ -202,7 +205,7 @@ if __name__ == "__main__":
             axs[i].imshow(anomaly_images[most_error[i], :, :, :])
         plt.show()
     for i, error_img in enumerate(most_error):
-        print(f"Cross-entropy error of anomaly-detected image: {cross_entropy_error[i]})
+        print(f"Cross-entropy error of anomaly-detected image: {cross_entropy_error[i]}")
         print(f"Class of anomaly-image {classes[error_img]}")
 
     # I have no data generator (VAE or whatever) here, so just use a sampled set
