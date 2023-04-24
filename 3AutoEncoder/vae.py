@@ -24,12 +24,13 @@ class VariationalAutoEncoder:
         self.file_name = file_name
         self.latent_dim = latent_dim
         input_img = keras.Input(shape=(28, 28, 1))
-        for channels in [64, 128]:
-            encoder = Conv2D(channels, (3, 3), strides=2, activation="relu", padding="same")(input_img)
-            encoder = BatchNormalization()(encoder)
+        encoder = Conv2D(32, (3, 3), strides=2, activation="relu", padding="same")(input_img)
+        encoder = BatchNormalization()(encoder)
+        encoder = Conv2D(64, (3, 3), strides=2, activation="relu", padding="same")(encoder)
+        encoder = BatchNormalization()(encoder)
 
         for _ in range(8):
-            encoder = Conv2D(128, (3, 3), strides=1, activation="relu", padding="same")(encoder)
+            encoder = Conv2D(64, (3, 3), strides=1, activation="relu", padding="same")(encoder)
             encoder = BatchNormalization()(encoder)
 
         encoder = Flatten()(encoder)
@@ -45,10 +46,10 @@ class VariationalAutoEncoder:
         decoder = Dense(49, activation='relu')(input_decoder)
         decoder = Reshape((7, 7, 1))(decoder)
         for _ in range(8):
-            decoder = Conv2DTranspose(128, (3, 3), activation="relu", strides=1, padding='same')(decoder)
+            decoder = Conv2DTranspose(64, (3, 3), activation="relu", strides=1, padding='same')(decoder)
             decoder = BatchNormalization()(decoder)
 
-        for channels in [128, 64]:
+        for channels in [64, 32]:
             decoder = Conv2DTranspose(channels, (3, 3), activation="relu", strides=2, padding='same')(decoder)
             decoder = BatchNormalization()(decoder)
 
@@ -59,13 +60,19 @@ class VariationalAutoEncoder:
         encoded = encoder_model(input_img)[2]
         decoded = decoder_model(encoded)
         vae_model = Model(inputs=input_img, outputs=decoded)
+
+        # Calculate the difference between the images. The same as for autoencoder.
         image_difference_loss = keras.losses.binary_crossentropy(input_img, decoded)
         image_difference_loss = keras.backend.mean(keras.backend.sum(image_difference_loss, axis=[1, 2]))
+
+        # add the kl_divergence loss term. Defined as https://arxiv.org/abs/1312.6114
         kl_loss = 1 + encoder_log_var - keras.backend.square(encoder_mean) - keras.backend.exp(encoder_log_var)
         kl_loss = keras.backend.sum(kl_loss, axis=-1)
         kl_loss *= -0.5
         vae_model.add_loss(keras.backend.mean(image_difference_loss + kl_loss))
-        vae_model.compile(optimizer=keras.optimizers.Adam(learning_rate=1e-3))
+        vae_model.add_metric(value=kl_loss, name="kl_loss")
+        vae_model.add_metric(value=image_difference_loss, name="image_reconstruction_loss")
+        vae_model.compile(optimizer=keras.optimizers.Adam(learning_rate=1e-4))
         self.model = vae_model
         self.decoder = decoder_model
         print(encoder_model.summary())
@@ -79,6 +86,9 @@ class VariationalAutoEncoder:
 
     def z_layer(self, args):
         z_mean, z_log_var = args
+
+        # N(z_mean, z_sd) = N(z_mean + sqrt(z_var)) = z_mean + exp(z_log_var * 0.5) * N(0,1)
+        # Just sample one number from the normal distribution and shift it
         epsilon = keras.backend.random_normal(shape=(keras.backend.shape(z_mean)[0], self.latent_dim))
         return z_mean + keras.backend.exp(z_log_var * 0.5) * epsilon
 
@@ -171,8 +181,8 @@ if __name__ == "__main__":
     else:
         filename = "models/variational_autoencoder_anomalies.h5"
     gen = StackedMNISTData(mode=mode, default_batch_size=2048)
-    net = VariationalAutoEncoder(force_learn=True, from_start=False, file_name=filename, latent_dim=2)
-    net.train(generator=gen, epochs=200)
+    net = VariationalAutoEncoder(force_learn=True, from_start=True, file_name=filename, latent_dim=2)
+    net.train(generator=gen, epochs=1000)
 
     verification_net = VerificationNet(force_learn=False, file_name="models/verification_model.h5")
     show_number_of_images = 10
