@@ -2,7 +2,7 @@ from stacked_mnist import StackedMNISTData, DataMode
 from tensorflow import keras
 from tensorflow.keras.models import Sequential, Model
 from tensorflow.keras.activations import relu
-from tensorflow.keras.layers import Dense, BatchNormalization, Flatten, Conv2D, Activation, Conv2DTranspose, Reshape
+from tensorflow.keras.layers import Dense, BatchNormalization, Flatten, Conv2D, Dropout, Activation, Conv2DTranspose, Reshape
 import numpy as np
 from keras.callbacks import TensorBoard
 import os
@@ -32,6 +32,7 @@ class VariationalAutoEncoder:
         for _ in range(8):
             encoder = Conv2D(64, (3, 3), strides=1, activation="relu", padding="same")(encoder)
             encoder = BatchNormalization()(encoder)
+            encoder = Dropout(0.2)(encoder)
 
         encoder = Flatten()(encoder)
 
@@ -171,7 +172,7 @@ class VariationalAutoEncoder:
 
 
 if __name__ == "__main__":
-    mode = DataMode.MONO_BINARY_COMPLETE
+    mode = DataMode.MONO_BINARY_MISSING
     if mode == DataMode.MONO_BINARY_COMPLETE or mode == DataMode.MONO_BINARY_MISSING:
         tolerance = 0.8
     else:
