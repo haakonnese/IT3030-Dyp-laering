@@ -2,7 +2,8 @@ from stacked_mnist import StackedMNISTData, DataMode
 from tensorflow import keras
 from tensorflow.keras.models import Sequential, Model
 from tensorflow.keras.activations import relu
-from tensorflow.keras.layers import Dense, BatchNormalization, Flatten, Conv2D, Dropout, Activation, Conv2DTranspose, Reshape
+from tensorflow.keras.layers import Dense, BatchNormalization, Flatten, Conv2D, Dropout, Activation, Conv2DTranspose, \
+    Reshape
 import numpy as np
 from keras.callbacks import TensorBoard
 import os
@@ -170,23 +171,56 @@ class VariationalAutoEncoder:
             generated_images[:, :, :, channel] = channel_prediction[:, :, :, 0]
         return generated_images
 
+    def anomaly_detection(self, data: np.ndarray):
+        no_channels = data.shape[-1]
+        print(data.shape)
+        if self.done_training is False:
+            # Model is not trained yet...
+            raise ValueError("Model is not trained, so makes no sense to try to use it")
+        num_gen_images = 1000
+        generate_random_images = np.zeros((num_gen_images, data.shape[1], data.shape[2], no_channels))
+
+        for channel in range(no_channels):
+            random_z = keras.backend.random_normal(shape=(num_gen_images, self.latent_dim))
+            random_channel_output = self.decoder.predict(random_z)
+            generate_random_images[:, :, :, channel] = random_channel_output[:, :, :, 0]
+        errors = np.zeros((200,))
+        for j in range(200):
+            if j % 100 == 0:
+                print(f"{j}/{data.shape[0]}")
+            errors[j] = keras.backend.mean(
+                keras.backend.exp(
+                    - keras.backend.mean(
+                        keras.losses.binary_crossentropy(data[j, :, :, :], generate_random_images),
+                        axis=[1, 2]),
+                    ),
+                axis=0)
+        return errors
+
 
 if __name__ == "__main__":
-    mode = DataMode.MONO_BINARY_MISSING
+    mode = DataMode.MONO_BINARY_COMPLETE
     if mode == DataMode.MONO_BINARY_COMPLETE or mode == DataMode.MONO_BINARY_MISSING:
         tolerance = 0.8
     else:
         tolerance = 0.5
     if mode == DataMode.MONO_BINARY_COMPLETE or mode == DataMode.COLOR_BINARY_COMPLETE:
         filename = "models/variational_autoencoder.h5"
+        png_extra = ""
+
     else:
         filename = "models/variational_autoencoder_anomalies.h5"
+        png_extra = "anomalies_"
+
     gen = StackedMNISTData(mode=mode, default_batch_size=2048)
-    net = VariationalAutoEncoder(force_learn=True, from_start=True, file_name=filename, latent_dim=2)
+    net = VariationalAutoEncoder(force_learn=False, from_start=False, file_name=filename, latent_dim=2)
     net.train(generator=gen, epochs=1000)
 
-    verification_net = VerificationNet(force_learn=False, file_name="models/verification_model.h5")
     show_number_of_images = 10
+    number_of_anomalies = 100
+    number_generate_images = 1000
+
+    verification_net = VerificationNet(force_learn=False, file_name="models/verification_model.h5")
     images_ds, classes = gen.get_random_batch(training=False, batch_size=25000)
     images = net.reconstruct(images_ds)
     _, axs = plt.subplots(2, show_number_of_images)
@@ -210,7 +244,7 @@ if __name__ == "__main__":
     # plt.show()
 
     _, axs = plt.subplots(1, show_number_of_images)
-    images = net.generate_random_images(show_number_of_images, no_channels=gen.channels)
+    images = net.generate_random_images(number_generate_images, no_channels=gen.channels)
     images = images.astype(float)
     print(images.shape)
     for i in range(show_number_of_images):
@@ -218,3 +252,24 @@ if __name__ == "__main__":
         axs[i].set_yticks([])
         axs[i].imshow(images[i, :, :, 0])
     plt.savefig("vae_generator.png")
+    cov_gen = verification_net.check_class_coverage(data=images, tolerance=tolerance)
+    pred_gen, _ = verification_net.check_predictability(data=images, tolerance=tolerance)
+    print(f"Coverage generator: {100 * cov_gen:.2f}%")
+    print(f"Predictability generator: {100 * pred_gen:.2f}%")
+
+    errors = net.anomaly_detection(images_ds)
+
+    most_error = np.argsort(errors, axis=None)[0:number_of_anomalies]
+    _, axs = plt.subplots(1, show_number_of_images)
+
+    for i in range(show_number_of_images):
+        axs[i].set_xticks([])
+        axs[i].set_yticks([])
+        axs[i].imshow(images_ds[most_error[i], :, :, 0])
+    plt.savefig(f"autoencoder_{png_extra}anomalies.png")
+    class_errors = []
+    for i, error_img in enumerate(most_error):
+        class_errors.append(classes[error_img])
+
+    for i in range(10):
+        print(f"Anomalies: Number of class {i}: {class_errors.count(i)}")
