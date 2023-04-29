@@ -1,0 +1,496 @@
+Model: "model"
+__________________________________________________________________________________________________
+Layer (type)                    Output Shape         Param #     Connected to                     
+==================================================================================================
+input_1 (InputLayer)            [(None, 28, 28, 1)]  0                                            
+__________________________________________________________________________________________________
+conv2d (Conv2D)                 (None, 14, 14, 32)   320         input_1[0][0]                    
+__________________________________________________________________________________________________
+batch_normalization (BatchNorma (None, 14, 14, 32)   128         conv2d[0][0]                     
+__________________________________________________________________________________________________
+conv2d_1 (Conv2D)               (None, 7, 7, 64)     18496       batch_normalization[0][0]        
+__________________________________________________________________________________________________
+batch_normalization_1 (BatchNor (None, 7, 7, 64)     256         conv2d_1[0][0]                   
+__________________________________________________________________________________________________
+conv2d_2 (Conv2D)               (None, 7, 7, 64)     36928       batch_normalization_1[0][0]      
+__________________________________________________________________________________________________
+batch_normalization_2 (BatchNor (None, 7, 7, 64)     256         conv2d_2[0][0]                   
+__________________________________________________________________________________________________
+dropout (Dropout)               (None, 7, 7, 64)     0           batch_normalization_2[0][0]      
+__________________________________________________________________________________________________
+conv2d_3 (Conv2D)               (None, 7, 7, 64)     36928       dropout[0][0]                    
+__________________________________________________________________________________________________
+batch_normalization_3 (BatchNor (None, 7, 7, 64)     256         conv2d_3[0][0]                   
+__________________________________________________________________________________________________
+dropout_1 (Dropout)             (None, 7, 7, 64)     0           batch_normalization_3[0][0]      
+__________________________________________________________________________________________________
+conv2d_4 (Conv2D)               (None, 7, 7, 64)     36928       dropout_1[0][0]                  
+__________________________________________________________________________________________________
+batch_normalization_4 (BatchNor (None, 7, 7, 64)     256         conv2d_4[0][0]                   
+__________________________________________________________________________________________________
+dropout_2 (Dropout)             (None, 7, 7, 64)     0           batch_normalization_4[0][0]      
+__________________________________________________________________________________________________
+conv2d_5 (Conv2D)               (None, 7, 7, 64)     36928       dropout_2[0][0]                  
+__________________________________________________________________________________________________
+batch_normalization_5 (BatchNor (None, 7, 7, 64)     256         conv2d_5[0][0]                   
+__________________________________________________________________________________________________
+dropout_3 (Dropout)             (None, 7, 7, 64)     0           batch_normalization_5[0][0]      
+__________________________________________________________________________________________________
+conv2d_6 (Conv2D)               (None, 7, 7, 64)     36928       dropout_3[0][0]                  
+__________________________________________________________________________________________________
+batch_normalization_6 (BatchNor (None, 7, 7, 64)     256         conv2d_6[0][0]                   
+__________________________________________________________________________________________________
+dropout_4 (Dropout)             (None, 7, 7, 64)     0           batch_normalization_6[0][0]      
+__________________________________________________________________________________________________
+conv2d_7 (Conv2D)               (None, 7, 7, 64)     36928       dropout_4[0][0]                  
+__________________________________________________________________________________________________
+batch_normalization_7 (BatchNor (None, 7, 7, 64)     256         conv2d_7[0][0]                   
+__________________________________________________________________________________________________
+dropout_5 (Dropout)             (None, 7, 7, 64)     0           batch_normalization_7[0][0]      
+__________________________________________________________________________________________________
+conv2d_8 (Conv2D)               (None, 7, 7, 64)     36928       dropout_5[0][0]                  
+__________________________________________________________________________________________________
+batch_normalization_8 (BatchNor (None, 7, 7, 64)     256         conv2d_8[0][0]                   
+__________________________________________________________________________________________________
+dropout_6 (Dropout)             (None, 7, 7, 64)     0           batch_normalization_8[0][0]      
+__________________________________________________________________________________________________
+conv2d_9 (Conv2D)               (None, 7, 7, 64)     36928       dropout_6[0][0]                  
+__________________________________________________________________________________________________
+batch_normalization_9 (BatchNor (None, 7, 7, 64)     256         conv2d_9[0][0]                   
+__________________________________________________________________________________________________
+dropout_7 (Dropout)             (None, 7, 7, 64)     0           batch_normalization_9[0][0]      
+__________________________________________________________________________________________________
+flatten (Flatten)               (None, 3136)         0           dropout_7[0][0]                  
+__________________________________________________________________________________________________
+dense (Dense)                   (None, 2)            6274        flatten[0][0]                    
+__________________________________________________________________________________________________
+dense_1 (Dense)                 (None, 2)            6274        flatten[0][0]                    
+__________________________________________________________________________________________________
+lambda (Lambda)                 (None, 2)            0           dense[0][0]                      
+                                                                 dense_1[0][0]                    
+==================================================================================================
+Total params: 329,220
+Trainable params: 328,004
+Non-trainable params: 1,216
+__________________________________________________________________________________________________
+None
+Model: "model_1"
+_________________________________________________________________
+Layer (type)                 Output Shape              Param #   
+=================================================================
+input_2 (InputLayer)         [(None, 2)]               0         
+_________________________________________________________________
+dense_2 (Dense)              (None, 49)                147       
+_________________________________________________________________
+reshape (Reshape)            (None, 7, 7, 1)           0         
+_________________________________________________________________
+conv2d_transpose (Conv2DTran (None, 7, 7, 64)          640       
+_________________________________________________________________
+batch_normalization_10 (Batc (None, 7, 7, 64)          256       
+_________________________________________________________________
+conv2d_transpose_1 (Conv2DTr (None, 7, 7, 64)          36928     
+_________________________________________________________________
+batch_normalization_11 (Batc (None, 7, 7, 64)          256       
+_________________________________________________________________
+conv2d_transpose_2 (Conv2DTr (None, 7, 7, 64)          36928     
+_________________________________________________________________
+batch_normalization_12 (Batc (None, 7, 7, 64)          256       
+_________________________________________________________________
+conv2d_transpose_3 (Conv2DTr (None, 7, 7, 64)          36928     
+_________________________________________________________________
+batch_normalization_13 (Batc (None, 7, 7, 64)          256       
+_________________________________________________________________
+conv2d_transpose_4 (Conv2DTr (None, 7, 7, 64)          36928     
+_________________________________________________________________
+batch_normalization_14 (Batc (None, 7, 7, 64)          256       
+_________________________________________________________________
+conv2d_transpose_5 (Conv2DTr (None, 7, 7, 64)          36928     
+_________________________________________________________________
+batch_normalization_15 (Batc (None, 7, 7, 64)          256       
+_________________________________________________________________
+conv2d_transpose_6 (Conv2DTr (None, 7, 7, 64)          36928     
+_________________________________________________________________
+batch_normalization_16 (Batc (None, 7, 7, 64)          256       
+_________________________________________________________________
+conv2d_transpose_7 (Conv2DTr (None, 7, 7, 64)          36928     
+_________________________________________________________________
+batch_normalization_17 (Batc (None, 7, 7, 64)          256       
+_________________________________________________________________
+conv2d_transpose_8 (Conv2DTr (None, 14, 14, 64)        36928     
+_________________________________________________________________
+batch_normalization_18 (Batc (None, 14, 14, 64)        256       
+_________________________________________________________________
+conv2d_transpose_9 (Conv2DTr (None, 28, 28, 32)        18464     
+_________________________________________________________________
+batch_normalization_19 (Batc (None, 28, 28, 32)        128       
+_________________________________________________________________
+conv2d_transpose_10 (Conv2DT (None, 28, 28, 1)         289       
+=================================================================
+Total params: 317,396
+Trainable params: 316,180
+Non-trainable params: 1,216
+_________________________________________________________________
+None
+Model: "model_2"
+__________________________________________________________________________________________________
+Layer (type)                    Output Shape         Param #     Connected to                     
+==================================================================================================
+input_1 (InputLayer)            [(None, 28, 28, 1)]  0                                            
+__________________________________________________________________________________________________
+model (Functional)              [(None, 2), (None, 2 329220      input_1[0][0]                    
+__________________________________________________________________________________________________
+model_1 (Functional)            (None, 28, 28, 1)    317396      model[0][2]                      
+__________________________________________________________________________________________________
+conv2d (Conv2D)                 (None, 14, 14, 32)   320         input_1[0][0]                    
+__________________________________________________________________________________________________
+batch_normalization (BatchNorma (None, 14, 14, 32)   128         conv2d[0][0]                     
+__________________________________________________________________________________________________
+conv2d_1 (Conv2D)               (None, 7, 7, 64)     18496       batch_normalization[0][0]        
+__________________________________________________________________________________________________
+batch_normalization_1 (BatchNor (None, 7, 7, 64)     256         conv2d_1[0][0]                   
+__________________________________________________________________________________________________
+conv2d_2 (Conv2D)               (None, 7, 7, 64)     36928       batch_normalization_1[0][0]      
+__________________________________________________________________________________________________
+batch_normalization_2 (BatchNor (None, 7, 7, 64)     256         conv2d_2[0][0]                   
+__________________________________________________________________________________________________
+dropout (Dropout)               (None, 7, 7, 64)     0           batch_normalization_2[0][0]      
+__________________________________________________________________________________________________
+conv2d_3 (Conv2D)               (None, 7, 7, 64)     36928       dropout[0][0]                    
+__________________________________________________________________________________________________
+batch_normalization_3 (BatchNor (None, 7, 7, 64)     256         conv2d_3[0][0]                   
+__________________________________________________________________________________________________
+dropout_1 (Dropout)             (None, 7, 7, 64)     0           batch_normalization_3[0][0]      
+__________________________________________________________________________________________________
+conv2d_4 (Conv2D)               (None, 7, 7, 64)     36928       dropout_1[0][0]                  
+__________________________________________________________________________________________________
+batch_normalization_4 (BatchNor (None, 7, 7, 64)     256         conv2d_4[0][0]                   
+__________________________________________________________________________________________________
+dropout_2 (Dropout)             (None, 7, 7, 64)     0           batch_normalization_4[0][0]      
+__________________________________________________________________________________________________
+conv2d_5 (Conv2D)               (None, 7, 7, 64)     36928       dropout_2[0][0]                  
+__________________________________________________________________________________________________
+batch_normalization_5 (BatchNor (None, 7, 7, 64)     256         conv2d_5[0][0]                   
+__________________________________________________________________________________________________
+dropout_3 (Dropout)             (None, 7, 7, 64)     0           batch_normalization_5[0][0]      
+__________________________________________________________________________________________________
+conv2d_6 (Conv2D)               (None, 7, 7, 64)     36928       dropout_3[0][0]                  
+__________________________________________________________________________________________________
+batch_normalization_6 (BatchNor (None, 7, 7, 64)     256         conv2d_6[0][0]                   
+__________________________________________________________________________________________________
+dropout_4 (Dropout)             (None, 7, 7, 64)     0           batch_normalization_6[0][0]      
+__________________________________________________________________________________________________
+conv2d_7 (Conv2D)               (None, 7, 7, 64)     36928       dropout_4[0][0]                  
+__________________________________________________________________________________________________
+batch_normalization_7 (BatchNor (None, 7, 7, 64)     256         conv2d_7[0][0]                   
+__________________________________________________________________________________________________
+dropout_5 (Dropout)             (None, 7, 7, 64)     0           batch_normalization_7[0][0]      
+__________________________________________________________________________________________________
+conv2d_8 (Conv2D)               (None, 7, 7, 64)     36928       dropout_5[0][0]                  
+__________________________________________________________________________________________________
+batch_normalization_8 (BatchNor (None, 7, 7, 64)     256         conv2d_8[0][0]                   
+__________________________________________________________________________________________________
+dropout_6 (Dropout)             (None, 7, 7, 64)     0           batch_normalization_8[0][0]      
+__________________________________________________________________________________________________
+conv2d_9 (Conv2D)               (None, 7, 7, 64)     36928       dropout_6[0][0]                  
+__________________________________________________________________________________________________
+batch_normalization_9 (BatchNor (None, 7, 7, 64)     256         conv2d_9[0][0]                   
+__________________________________________________________________________________________________
+dropout_7 (Dropout)             (None, 7, 7, 64)     0           batch_normalization_9[0][0]      
+__________________________________________________________________________________________________
+flatten (Flatten)               (None, 3136)         0           dropout_7[0][0]                  
+__________________________________________________________________________________________________
+dense_1 (Dense)                 (None, 2)            6274        flatten[0][0]                    
+__________________________________________________________________________________________________
+dense (Dense)                   (None, 2)            6274        flatten[0][0]                    
+__________________________________________________________________________________________________
+tf.cast (TFOpLambda)            (None, 28, 28, 1)    0           input_1[0][0]                    
+__________________________________________________________________________________________________
+tf.convert_to_tensor (TFOpLambd (None, 28, 28, 1)    0           model_1[0][0]                    
+__________________________________________________________________________________________________
+tf.__operators__.add (TFOpLambd (None, 2)            0           dense_1[0][0]                    
+__________________________________________________________________________________________________
+tf.math.square (TFOpLambda)     (None, 2)            0           dense[0][0]                      
+__________________________________________________________________________________________________
+tf.keras.backend.binary_crossen (None, 28, 28, 1)    0           tf.cast[0][0]                    
+                                                                 tf.convert_to_tensor[0][0]       
+__________________________________________________________________________________________________
+tf.math.subtract (TFOpLambda)   (None, 2)            0           tf.__operators__.add[0][0]       
+                                                                 tf.math.square[0][0]             
+__________________________________________________________________________________________________
+tf.math.exp (TFOpLambda)        (None, 2)            0           dense_1[0][0]                    
+__________________________________________________________________________________________________
+tf.math.reduce_mean (TFOpLambda (None, 28, 28)       0           tf.keras.backend.binary_crossentr
+__________________________________________________________________________________________________
+tf.math.subtract_1 (TFOpLambda) (None, 2)            0           tf.math.subtract[0][0]           
+                                                                 tf.math.exp[0][0]                
+__________________________________________________________________________________________________
+tf.math.reduce_sum (TFOpLambda) (None,)              0           tf.math.reduce_mean[0][0]        
+__________________________________________________________________________________________________
+tf.math.reduce_sum_1 (TFOpLambd (None,)              0           tf.math.subtract_1[0][0]         
+__________________________________________________________________________________________________
+tf.math.reduce_mean_1 (TFOpLamb ()                   0           tf.math.reduce_sum[0][0]         
+__________________________________________________________________________________________________
+tf.math.multiply (TFOpLambda)   (None,)              0           tf.math.reduce_sum_1[0][0]       
+__________________________________________________________________________________________________
+tf.__operators__.add_1 (TFOpLam (None,)              0           tf.math.reduce_mean_1[0][0]      
+                                                                 tf.math.multiply[0][0]           
+__________________________________________________________________________________________________
+tf.math.reduce_mean_2 (TFOpLamb ()                   0           tf.__operators__.add_1[0][0]     
+__________________________________________________________________________________________________
+add_loss (AddLoss)              ()                   0           tf.math.reduce_mean_2[0][0]      
+__________________________________________________________________________________________________
+add_metric (AddMetric)          (None,)              0           tf.math.multiply[0][0]           
+__________________________________________________________________________________________________
+add_metric_1 (AddMetric)        ()                   0           tf.math.reduce_mean_1[0][0]      
+==================================================================================================
+Total params: 646,616
+Trainable params: 644,184
+Non-trainable params: 2,432
+__________________________________________________________________________________________________
+None
+(25000, 28, 28, 3)
+Predicting test-cases for data trained with 8. For the color-case
+Coverage: 99.90%
+Predictability: 99.04%
+Accuracy: 70.78%
+Coverage generator: 99.60%
+Predictability generator: 94.83%
+Printing classes with anomalies
+Anomalies: Number of class 000: 2
+Anomalies: Number of class 002: 10
+Anomalies: Number of class 003: 2
+Anomalies: Number of class 004: 1
+Anomalies: Number of class 005: 4
+Anomalies: Number of class 006: 1
+Anomalies: Number of class 007: 7
+Anomalies: Number of class 008: 14
+Anomalies: Number of class 009: 3
+Anomalies: Number of class 013: 5
+Anomalies: Number of class 020: 10
+Anomalies: Number of class 022: 7
+Anomalies: Number of class 024: 10
+Anomalies: Number of class 025: 4
+Anomalies: Number of class 026: 2
+Anomalies: Number of class 027: 1
+Anomalies: Number of class 028: 5
+Anomalies: Number of class 029: 8
+Anomalies: Number of class 030: 18
+Anomalies: Number of class 032: 18
+Anomalies: Number of class 034: 4
+Anomalies: Number of class 035: 5
+Anomalies: Number of class 037: 2
+Anomalies: Number of class 038: 8
+Anomalies: Number of class 039: 4
+Anomalies: Number of class 040: 7
+Anomalies: Number of class 042: 1
+Anomalies: Number of class 043: 3
+Anomalies: Number of class 044: 8
+Anomalies: Number of class 050: 6
+Anomalies: Number of class 051: 2
+Anomalies: Number of class 053: 3
+Anomalies: Number of class 054: 3
+Anomalies: Number of class 055: 3
+Anomalies: Number of class 056: 11
+Anomalies: Number of class 057: 1
+Anomalies: Number of class 058: 1
+Anomalies: Number of class 060: 4
+Anomalies: Number of class 063: 14
+Anomalies: Number of class 066: 3
+Anomalies: Number of class 067: 2
+Anomalies: Number of class 069: 4
+Anomalies: Number of class 070: 8
+Anomalies: Number of class 072: 1
+Anomalies: Number of class 073: 2
+Anomalies: Number of class 079: 2
+Anomalies: Number of class 080: 20
+Anomalies: Number of class 082: 6
+Anomalies: Number of class 085: 7
+Anomalies: Number of class 087: 3
+Anomalies: Number of class 090: 10
+Anomalies: Number of class 093: 3
+Anomalies: Number of class 094: 4
+Anomalies: Number of class 098: 3
+Anomalies: Number of class 099: 1
+Anomalies: Number of class 100: 2
+Anomalies: Number of class 130: 2
+Anomalies: Number of class 160: 2
+Anomalies: Number of class 200: 8
+Anomalies: Number of class 201: 2
+Anomalies: Number of class 202: 10
+Anomalies: Number of class 203: 8
+Anomalies: Number of class 204: 8
+Anomalies: Number of class 206: 15
+Anomalies: Number of class 207: 2
+Anomalies: Number of class 208: 10
+Anomalies: Number of class 213: 4
+Anomalies: Number of class 220: 6
+Anomalies: Number of class 221: 2
+Anomalies: Number of class 222: 6
+Anomalies: Number of class 223: 1
+Anomalies: Number of class 225: 2
+Anomalies: Number of class 226: 3
+Anomalies: Number of class 227: 7
+Anomalies: Number of class 228: 9
+Anomalies: Number of class 230: 11
+Anomalies: Number of class 232: 2
+Anomalies: Number of class 233: 6
+Anomalies: Number of class 235: 4
+Anomalies: Number of class 236: 10
+Anomalies: Number of class 240: 6
+Anomalies: Number of class 243: 3
+Anomalies: Number of class 250: 1
+Anomalies: Number of class 256: 2
+Anomalies: Number of class 262: 3
+Anomalies: Number of class 270: 5
+Anomalies: Number of class 273: 4
+Anomalies: Number of class 275: 1
+Anomalies: Number of class 276: 3
+Anomalies: Number of class 277: 1
+Anomalies: Number of class 280: 2
+Anomalies: Number of class 284: 1
+Anomalies: Number of class 287: 3
+Anomalies: Number of class 294: 1
+Anomalies: Number of class 298: 2
+Anomalies: Number of class 300: 1
+Anomalies: Number of class 302: 4
+Anomalies: Number of class 303: 2
+Anomalies: Number of class 305: 3
+Anomalies: Number of class 306: 6
+Anomalies: Number of class 307: 1
+Anomalies: Number of class 308: 11
+Anomalies: Number of class 310: 1
+Anomalies: Number of class 320: 6
+Anomalies: Number of class 322: 6
+Anomalies: Number of class 323: 2
+Anomalies: Number of class 325: 2
+Anomalies: Number of class 328: 4
+Anomalies: Number of class 329: 5
+Anomalies: Number of class 330: 10
+Anomalies: Number of class 332: 3
+Anomalies: Number of class 335: 3
+Anomalies: Number of class 336: 3
+Anomalies: Number of class 337: 2
+Anomalies: Number of class 342: 3
+Anomalies: Number of class 350: 6
+Anomalies: Number of class 352: 3
+Anomalies: Number of class 360: 3
+Anomalies: Number of class 361: 2
+Anomalies: Number of class 362: 4
+Anomalies: Number of class 369: 3
+Anomalies: Number of class 370: 3
+Anomalies: Number of class 373: 2
+Anomalies: Number of class 380: 3
+Anomalies: Number of class 383: 3
+Anomalies: Number of class 393: 1
+Anomalies: Number of class 398: 7
+Anomalies: Number of class 400: 4
+Anomalies: Number of class 402: 11
+Anomalies: Number of class 404: 2
+Anomalies: Number of class 407: 3
+Anomalies: Number of class 408: 1
+Anomalies: Number of class 420: 6
+Anomalies: Number of class 422: 1
+Anomalies: Number of class 432: 1
+Anomalies: Number of class 450: 4
+Anomalies: Number of class 465: 1
+Anomalies: Number of class 470: 2
+Anomalies: Number of class 480: 7
+Anomalies: Number of class 487: 4
+Anomalies: Number of class 490: 3
+Anomalies: Number of class 504: 3
+Anomalies: Number of class 506: 3
+Anomalies: Number of class 508: 2
+Anomalies: Number of class 522: 3
+Anomalies: Number of class 523: 3
+Anomalies: Number of class 525: 1
+Anomalies: Number of class 526: 5
+Anomalies: Number of class 528: 2
+Anomalies: Number of class 530: 8
+Anomalies: Number of class 532: 1
+Anomalies: Number of class 538: 2
+Anomalies: Number of class 548: 2
+Anomalies: Number of class 550: 4
+Anomalies: Number of class 562: 1
+Anomalies: Number of class 566: 4
+Anomalies: Number of class 570: 2
+Anomalies: Number of class 587: 3
+Anomalies: Number of class 600: 4
+Anomalies: Number of class 602: 6
+Anomalies: Number of class 603: 11
+Anomalies: Number of class 604: 2
+Anomalies: Number of class 605: 3
+Anomalies: Number of class 606: 3
+Anomalies: Number of class 608: 4
+Anomalies: Number of class 620: 5
+Anomalies: Number of class 623: 1
+Anomalies: Number of class 628: 8
+Anomalies: Number of class 630: 3
+Anomalies: Number of class 634: 6
+Anomalies: Number of class 636: 2
+Anomalies: Number of class 643: 4
+Anomalies: Number of class 656: 2
+Anomalies: Number of class 657: 1
+Anomalies: Number of class 662: 7
+Anomalies: Number of class 664: 6
+Anomalies: Number of class 670: 2
+Anomalies: Number of class 674: 5
+Anomalies: Number of class 676: 4
+Anomalies: Number of class 678: 1
+Anomalies: Number of class 680: 4
+Anomalies: Number of class 682: 5
+Anomalies: Number of class 686: 4
+Anomalies: Number of class 696: 3
+Anomalies: Number of class 700: 3
+Anomalies: Number of class 702: 9
+Anomalies: Number of class 704: 3
+Anomalies: Number of class 705: 2
+Anomalies: Number of class 706: 2
+Anomalies: Number of class 709: 2
+Anomalies: Number of class 723: 4
+Anomalies: Number of class 730: 2
+Anomalies: Number of class 736: 3
+Anomalies: Number of class 740: 3
+Anomalies: Number of class 750: 3
+Anomalies: Number of class 763: 1
+Anomalies: Number of class 766: 6
+Anomalies: Number of class 768: 4
+Anomalies: Number of class 800: 2
+Anomalies: Number of class 802: 6
+Anomalies: Number of class 803: 16
+Anomalies: Number of class 805: 5
+Anomalies: Number of class 806: 1
+Anomalies: Number of class 808: 3
+Anomalies: Number of class 820: 3
+Anomalies: Number of class 822: 7
+Anomalies: Number of class 829: 1
+Anomalies: Number of class 830: 4
+Anomalies: Number of class 832: 5
+Anomalies: Number of class 833: 7
+Anomalies: Number of class 834: 3
+Anomalies: Number of class 835: 2
+Anomalies: Number of class 852: 3
+Anomalies: Number of class 853: 1
+Anomalies: Number of class 855: 7
+Anomalies: Number of class 860: 1
+Anomalies: Number of class 866: 1
+Anomalies: Number of class 868: 4
+Anomalies: Number of class 872: 2
+Anomalies: Number of class 876: 3
+Anomalies: Number of class 880: 3
+Anomalies: Number of class 885: 5
+Anomalies: Number of class 888: 3
+Anomalies: Number of class 889: 3
+Anomalies: Number of class 890: 2
+Anomalies: Number of class 899: 2
+Anomalies: Number of class 902: 10
+Anomalies: Number of class 903: 2
+Anomalies: Number of class 907: 3
+Anomalies: Number of class 909: 2
+Anomalies: Number of class 921: 2
+Anomalies: Number of class 923: 8
+Anomalies: Number of class 928: 3
+Anomalies: Number of class 930: 1
+Anomalies: Number of class 950: 3
+Anomalies: Number of class 954: 4
+Anomalies: Number of class 960: 4
+Anomalies: Number of class 990: 2

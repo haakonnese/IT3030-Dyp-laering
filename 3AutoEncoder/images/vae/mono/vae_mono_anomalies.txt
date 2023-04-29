@@ -256,12 +256,12 @@ Accuracy: 78.66%
 Coverage generator: 100.00%
 Predictability generator: 95.00%
 Printing classes with anomalies
-Anomalies: Number of class 000: 535
-Anomalies: Number of class 002: 146
-Anomalies: Number of class 003: 53
-Anomalies: Number of class 004: 48
-Anomalies: Number of class 005: 38
-Anomalies: Number of class 006: 90
-Anomalies: Number of class 007: 9
-Anomalies: Number of class 008: 67
-Anomalies: Number of class 009: 14
+Anomalies: Number of class 0: 535
+Anomalies: Number of class 2: 146
+Anomalies: Number of class 3: 53
+Anomalies: Number of class 4: 48
+Anomalies: Number of class 5: 38
+Anomalies: Number of class 6: 90
+Anomalies: Number of class 7: 9
+Anomalies: Number of class 8: 67
+Anomalies: Number of class 9: 14
