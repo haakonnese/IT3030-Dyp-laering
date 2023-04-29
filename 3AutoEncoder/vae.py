@@ -181,7 +181,7 @@ class VariationalAutoEncoder:
         generate_random_images = np.zeros((num_gen_images, data.shape[1], data.shape[2], no_channels))
 
         for channel in range(no_channels):
-            random_z = keras.backend.random_normal(shape=(num_gen_images, self.latent_dim))
+            random_z = np.random.normal(size=(num_gen_images, self.latent_dim))
             random_channel_output = self.decoder.predict(random_z)
             generate_random_images[:, :, :, channel] = random_channel_output[:, :, :, 0]
         errors = np.zeros((data.shape[0],))
@@ -243,7 +243,7 @@ if __name__ == "__main__":
         axs[1][i].set_yticks([])
         axs[0][i].imshow(images_ds[i, :, :, channels_view])
         axs[1][i].imshow(images[i, :, :, channels_view])
-    plt.savefig("vae_test_data.png")
+    plt.savefig(f"vae_{png_extra}test_data.png")
     # plt.show()
 
     _, axs = plt.subplots(1, show_number_of_images)
@@ -254,7 +254,7 @@ if __name__ == "__main__":
         axs[i].set_xticks([])
         axs[i].set_yticks([])
         axs[i].imshow(images[i, :, :, channels_view])
-    plt.savefig("vae_generator.png")
+    plt.savefig(f"vae_{png_extra}generator_.png")
     cov_gen = verification_net.check_class_coverage(data=images, tolerance=tolerance)
     pred_gen, _ = verification_net.check_predictability(data=images, tolerance=tolerance)
     print(f"Coverage generator: {100 * cov_gen:.2f}%")
@@ -269,7 +269,7 @@ if __name__ == "__main__":
         axs[i].set_xticks([])
         axs[i].set_yticks([])
         axs[i].imshow(images_ds[most_error[i], :, :, channels_view])
-    plt.savefig(f"variational_autoencoder_{png_extra}anomalies.png")
+    plt.savefig(f"vae_{png_extra}anomalies.png")
     class_errors = []
     for i, error_img in enumerate(most_error):
         class_errors.append(classes[error_img])
