@@ -163,14 +163,22 @@ if __name__ == "__main__":
     mode = DataMode.MONO_BINARY_COMPLETE
     if mode == DataMode.MONO_BINARY_COMPLETE or mode == DataMode.MONO_BINARY_MISSING:
         tolerance = 0.8
+        mono_color = "mono"
+        channels_view = 0
+
     else:
         tolerance = 0.5
+        mono_color = "color"
+        channels_view = slice(0,3)
     if mode == DataMode.MONO_BINARY_COMPLETE or mode == DataMode.COLOR_BINARY_COMPLETE:
         filename = "models/autoencoder.h5"
         png_extra = ""
+        printing = "with 8"
     else:
         filename = "models/autoencoder_anomalies.h5"
         png_extra = "anomalies_"
+        printing = "without 8"
+
 
     gen = StackedMNISTData(mode=mode, default_batch_size=2048)
     net = AutoEncoder(force_learn=False, file_name=filename, latent_dim=2)
@@ -193,12 +201,13 @@ if __name__ == "__main__":
         axs[1][i].set_xticks([])
         axs[0][i].set_yticks([])
         axs[1][i].set_yticks([])
-        axs[0][i].imshow(images_ds[i, :, :, 0])
-        axs[1][i].imshow(images[i, :, :, 0])
+        axs[0][i].imshow(images_ds[i, :, :, channels_view])
+        axs[1][i].imshow(images[i, :, :, channels_view])
     plt.savefig(f"autoencoder_{png_extra}test_data.png")
 
     cov = verification_net.check_class_coverage(data=images, tolerance=tolerance)
     pred, acc = verification_net.check_predictability(data=images, correct_labels=classes, tolerance=tolerance)
+    print(f"Predicting test-cases for data trained {printing}. For the {mono_color}-case")
     print(f"Coverage: {100 * cov:.2f}%")
     print(f"Predictability: {100 * pred:.2f}%")
     print(f"Accuracy: {100 * acc:.2f}%")
@@ -209,7 +218,7 @@ if __name__ == "__main__":
     for i in range(show_number_of_images):
         axs[i].set_xticks([])
         axs[i].set_yticks([])
-        axs[i].imshow(images[i, :, :, 0])
+        axs[i].imshow(images[i, :, :, channels_view])
     plt.savefig(f"autoencoder_{png_extra}generator.png")
     cov_gen = verification_net.check_class_coverage(data=images, tolerance=tolerance)
     pred_gen, _ = verification_net.check_predictability(data=images, tolerance=tolerance)
@@ -226,12 +235,14 @@ if __name__ == "__main__":
         axs[1][i].set_xticks([])
         axs[0][i].set_yticks([])
         axs[1][i].set_yticks([])
-        axs[0][i].imshow(images_ds[most_error[i], :, :, 0])
-        axs[1][i].imshow(anomaly_images[most_error[i], :, :, 0])
+        axs[0][i].imshow(images_ds[most_error[i], :, :, channels_view])
+        axs[1][i].imshow(anomaly_images[most_error[i], :, :, channels_view])
     plt.savefig(f"autoencoder_{png_extra}anomalies.png")
     class_errors = []
     for i, error_img in enumerate(most_error):
         class_errors.append(classes[error_img])
 
-    for i in range(10):
-        print(f"Anomalies: Number of class {i}: {class_errors.count(i)}")
+    print("Printing classes with anomalies")
+    for i in range(10 if mono_color == "mono" else 1000):
+        if class_errors.count(i) > 0:
+            print(f"Anomalies: Number of class {i:03d}: {class_errors.count(i)}")

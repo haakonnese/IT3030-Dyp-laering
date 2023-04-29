@@ -173,7 +173,6 @@ class VariationalAutoEncoder:
 
     def anomaly_detection(self, data: np.ndarray):
         no_channels = data.shape[-1]
-        print(data.shape)
         if self.done_training is False:
             # Model is not trained yet...
             raise ValueError("Model is not trained, so makes no sense to try to use it")
@@ -186,24 +185,23 @@ class VariationalAutoEncoder:
             generate_random_images[:, :, :, channel] = random_channel_output[:, :, :, 0]
         errors = np.zeros((data.shape[0],))
         for j in range(data.shape[0]):
-            errors[j] = keras.backend.mean(
-                keras.backend.exp(
-                    - keras.backend.mean(
-                        keras.losses.binary_crossentropy(data[j, :, :, :], generate_random_images),
-                        axis=[1, 2]),
-                    ),
-                axis=0)
+            image = keras.backend.flatten(data[j,:,:,:])
+            genn = keras.backend.batch_flatten(generate_random_images)
+            errors[j] = np.mean(np.exp(- keras.losses.binary_crossentropy(image, genn)))
         return errors
 
 
 if __name__ == "__main__":
-    mode = DataMode.MONO_BINARY_MISSING
+    mode = DataMode.COLOR_BINARY_MISSING
     if mode == DataMode.MONO_BINARY_COMPLETE or mode == DataMode.MONO_BINARY_MISSING:
         tolerance = 0.8
         channels_view = 0
+        mono_color = "mono"
     else:
         tolerance = 0.5
-        channels_view = slice(0,2)
+        channels_view = slice(0,3)
+        mono_color = "color"
+
     if mode == DataMode.MONO_BINARY_COMPLETE or mode == DataMode.COLOR_BINARY_COMPLETE:
         filename = "models/variational_autoencoder.h5"
         png_extra = ""
@@ -231,7 +229,7 @@ if __name__ == "__main__":
 
     cov = verification_net.check_class_coverage(data=images, tolerance=tolerance)
     pred, acc = verification_net.check_predictability(data=images, correct_labels=classes, tolerance=tolerance)
-    print(f"Predicting test-cases for data trained {printing}")
+    print(f"Predicting test-cases for data trained {printing}. For the {mono_color}-case")
     print(f"Coverage: {100 * cov:.2f}%")
     print(f"Predictability: {100 * pred:.2f}%")
     print(f"Accuracy: {100 * acc:.2f}%")
@@ -243,7 +241,7 @@ if __name__ == "__main__":
         axs[1][i].set_yticks([])
         axs[0][i].imshow(images_ds[i, :, :, channels_view])
         axs[1][i].imshow(images[i, :, :, channels_view])
-    plt.savefig(f"vae_{png_extra}test_data.png")
+    plt.savefig(f"vae_{mono_color}_{png_extra}test_data.png")
     # plt.show()
 
     _, axs = plt.subplots(1, show_number_of_images)
@@ -254,7 +252,7 @@ if __name__ == "__main__":
         axs[i].set_xticks([])
         axs[i].set_yticks([])
         axs[i].imshow(images[i, :, :, channels_view])
-    plt.savefig(f"vae_{png_extra}generator_.png")
+    plt.savefig(f"vae_{mono_color}_{png_extra}generator.png")
     cov_gen = verification_net.check_class_coverage(data=images, tolerance=tolerance)
     pred_gen, _ = verification_net.check_predictability(data=images, tolerance=tolerance)
     print(f"Coverage generator: {100 * cov_gen:.2f}%")
@@ -263,16 +261,18 @@ if __name__ == "__main__":
     errors = net.anomaly_detection(images_ds)
 
     most_error = np.argsort(errors, axis=None)[0:number_of_anomalies]
-    _, axs = plt.subplots(1, show_number_of_images)
+    _, axs = plt.subplots(show_number_of_images, show_number_of_images)
 
     for i in range(show_number_of_images):
-        axs[i].set_xticks([])
-        axs[i].set_yticks([])
-        axs[i].imshow(images_ds[most_error[i], :, :, channels_view])
-    plt.savefig(f"vae_{png_extra}anomalies.png")
+        for j in range(show_number_of_images):
+            axs[i][j].set_xticks([])
+            axs[i][j].set_yticks([])
+            axs[i][j].imshow(images_ds[most_error[i*show_number_of_images + j], :, :, channels_view])
+    plt.savefig(f"vae_{mono_color}_{png_extra}anomalies.png")
     class_errors = []
     for i, error_img in enumerate(most_error):
         class_errors.append(classes[error_img])
-
-    for i in range(10):
-        print(f"Anomalies: Number of class {i}: {class_errors.count(i)}")
+    print("Printing classes with anomalies")
+    for i in range(10 if mono_color == "mono" else 1000):
+        if class_errors.count(i) > 0:
+            print(f"Anomalies: Number of class {i:03d}: {class_errors.count(i)}")
