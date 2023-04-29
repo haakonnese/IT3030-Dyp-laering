@@ -249,20 +249,19 @@ Non-trainable params: 2,432
 __________________________________________________________________________________________________
 None
 (25000, 28, 28, 1)
-Predicting test-cases for data trained without 8
+Predicting test-cases for data trained without 8. For the mono-case
 Coverage: 90.00%
-Predictability: 96.96%
-Accuracy: 78.82%
-Coverage generator: 90.00%
-Predictability generator: 94.69%
-(25000, 28, 28, 1)
-Anomalies: Number of class 0: 562
-Anomalies: Number of class 1: 0
-Anomalies: Number of class 2: 133
-Anomalies: Number of class 3: 54
-Anomalies: Number of class 4: 35
-Anomalies: Number of class 5: 27
-Anomalies: Number of class 6: 99
-Anomalies: Number of class 7: 11
-Anomalies: Number of class 8: 63
-Anomalies: Number of class 9: 16
+Predictability: 97.10%
+Accuracy: 78.66%
+Coverage generator: 100.00%
+Predictability generator: 95.00%
+Printing classes with anomalies
+Anomalies: Number of class 0: 535
+Anomalies: Number of class 2: 146
+Anomalies: Number of class 3: 53
+Anomalies: Number of class 4: 48
+Anomalies: Number of class 5: 38
+Anomalies: Number of class 6: 90
+Anomalies: Number of class 7: 9
+Anomalies: Number of class 8: 67
+Anomalies: Number of class 9: 14

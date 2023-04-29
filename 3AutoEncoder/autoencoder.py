@@ -160,7 +160,7 @@ class AutoEncoder:
 
 
 if __name__ == "__main__":
-    mode = DataMode.MONO_BINARY_COMPLETE
+    mode = DataMode.COLOR_BINARY_MISSING
     if mode == DataMode.MONO_BINARY_COMPLETE or mode == DataMode.MONO_BINARY_MISSING:
         tolerance = 0.8
         mono_color = "mono"
@@ -172,7 +172,7 @@ if __name__ == "__main__":
         channels_view = slice(0,3)
     if mode == DataMode.MONO_BINARY_COMPLETE or mode == DataMode.COLOR_BINARY_COMPLETE:
         filename = "models/autoencoder.h5"
-        png_extra = ""
+        png_extra = "complete_"
         printing = "with 8"
     else:
         filename = "models/autoencoder_anomalies.h5"
@@ -188,7 +188,7 @@ if __name__ == "__main__":
 
     show_number_of_images = 10
     number_of_anomalies = 100
-    number_generate_images = 1000
+    number_generate_images = 10000
 
     images_ds, classes = gen.get_random_batch(training=False, batch_size=25000)
     images_ds = images_ds.astype(float)
@@ -203,7 +203,7 @@ if __name__ == "__main__":
         axs[1][i].set_yticks([])
         axs[0][i].imshow(images_ds[i, :, :, channels_view])
         axs[1][i].imshow(images[i, :, :, channels_view])
-    plt.savefig(f"autoencoder_{png_extra}test_data.png")
+    plt.savefig(f"autoencoder_{mono_color}_{png_extra}test_data.png")
 
     cov = verification_net.check_class_coverage(data=images, tolerance=tolerance)
     pred, acc = verification_net.check_predictability(data=images, correct_labels=classes, tolerance=tolerance)
@@ -219,7 +219,7 @@ if __name__ == "__main__":
         axs[i].set_xticks([])
         axs[i].set_yticks([])
         axs[i].imshow(images[i, :, :, channels_view])
-    plt.savefig(f"autoencoder_{png_extra}generator.png")
+    plt.savefig(f"autoencoder_{mono_color}_{png_extra}generator.png")
     cov_gen = verification_net.check_class_coverage(data=images, tolerance=tolerance)
     pred_gen, _ = verification_net.check_predictability(data=images, tolerance=tolerance)
     print(f"Coverage generator: {100 * cov_gen:.2f}%")
@@ -237,7 +237,7 @@ if __name__ == "__main__":
         axs[1][i].set_yticks([])
         axs[0][i].imshow(images_ds[most_error[i], :, :, channels_view])
         axs[1][i].imshow(anomaly_images[most_error[i], :, :, channels_view])
-    plt.savefig(f"autoencoder_{png_extra}anomalies.png")
+    plt.savefig(f"autoencoder_{mono_color}_{png_extra}anomalies.png")
     class_errors = []
     for i, error_img in enumerate(most_error):
         class_errors.append(classes[error_img])
