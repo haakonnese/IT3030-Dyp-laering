@@ -177,17 +177,15 @@ class VariationalAutoEncoder:
         if self.done_training is False:
             # Model is not trained yet...
             raise ValueError("Model is not trained, so makes no sense to try to use it")
-        num_gen_images = 1000
+        num_gen_images = 10000
         generate_random_images = np.zeros((num_gen_images, data.shape[1], data.shape[2], no_channels))
 
         for channel in range(no_channels):
             random_z = keras.backend.random_normal(shape=(num_gen_images, self.latent_dim))
             random_channel_output = self.decoder.predict(random_z)
             generate_random_images[:, :, :, channel] = random_channel_output[:, :, :, 0]
-        errors = np.zeros((200,))
-        for j in range(200):
-            if j % 100 == 0:
-                print(f"{j}/{data.shape[0]}")
+        errors = np.zeros((data.shape[0],))
+        for j in range(data.shape[0]):
             errors[j] = keras.backend.mean(
                 keras.backend.exp(
                     - keras.backend.mean(
@@ -199,26 +197,30 @@ class VariationalAutoEncoder:
 
 
 if __name__ == "__main__":
-    mode = DataMode.MONO_BINARY_COMPLETE
+    mode = DataMode.MONO_BINARY_MISSING
     if mode == DataMode.MONO_BINARY_COMPLETE or mode == DataMode.MONO_BINARY_MISSING:
         tolerance = 0.8
+        channels_view = 0
     else:
         tolerance = 0.5
+        channels_view = slice(0,2)
     if mode == DataMode.MONO_BINARY_COMPLETE or mode == DataMode.COLOR_BINARY_COMPLETE:
         filename = "models/variational_autoencoder.h5"
         png_extra = ""
+        printing = "with 8"
 
     else:
         filename = "models/variational_autoencoder_anomalies.h5"
         png_extra = "anomalies_"
-
+        printing = "without 8"
+    
     gen = StackedMNISTData(mode=mode, default_batch_size=2048)
     net = VariationalAutoEncoder(force_learn=False, from_start=False, file_name=filename, latent_dim=2)
     net.train(generator=gen, epochs=1000)
 
     show_number_of_images = 10
-    number_of_anomalies = 100
-    number_generate_images = 1000
+    number_of_anomalies = 1000
+    number_generate_images = 10000
 
     verification_net = VerificationNet(force_learn=False, file_name="models/verification_model.h5")
     images_ds, classes = gen.get_random_batch(training=False, batch_size=25000)
@@ -229,6 +231,7 @@ if __name__ == "__main__":
 
     cov = verification_net.check_class_coverage(data=images, tolerance=tolerance)
     pred, acc = verification_net.check_predictability(data=images, correct_labels=classes, tolerance=tolerance)
+    print(f"Predicting test-cases for data trained {printing}")
     print(f"Coverage: {100 * cov:.2f}%")
     print(f"Predictability: {100 * pred:.2f}%")
     print(f"Accuracy: {100 * acc:.2f}%")
@@ -238,19 +241,19 @@ if __name__ == "__main__":
         axs[1][i].set_xticks([])
         axs[0][i].set_yticks([])
         axs[1][i].set_yticks([])
-        axs[0][i].imshow(images_ds[i, :, :, 0])
-        axs[1][i].imshow(images[i, :, :, 0])
+        axs[0][i].imshow(images_ds[i, :, :, channels_view])
+        axs[1][i].imshow(images[i, :, :, channels_view])
     plt.savefig("vae_test_data.png")
     # plt.show()
 
     _, axs = plt.subplots(1, show_number_of_images)
     images = net.generate_random_images(number_generate_images, no_channels=gen.channels)
     images = images.astype(float)
-    print(images.shape)
+
     for i in range(show_number_of_images):
         axs[i].set_xticks([])
         axs[i].set_yticks([])
-        axs[i].imshow(images[i, :, :, 0])
+        axs[i].imshow(images[i, :, :, channels_view])
     plt.savefig("vae_generator.png")
     cov_gen = verification_net.check_class_coverage(data=images, tolerance=tolerance)
     pred_gen, _ = verification_net.check_predictability(data=images, tolerance=tolerance)
@@ -265,8 +268,8 @@ if __name__ == "__main__":
     for i in range(show_number_of_images):
         axs[i].set_xticks([])
         axs[i].set_yticks([])
-        axs[i].imshow(images_ds[most_error[i], :, :, 0])
-    plt.savefig(f"autoencoder_{png_extra}anomalies.png")
+        axs[i].imshow(images_ds[most_error[i], :, :, channels_view])
+    plt.savefig(f"variational_autoencoder_{png_extra}anomalies.png")
     class_errors = []
     for i, error_img in enumerate(most_error):
         class_errors.append(classes[error_img])
